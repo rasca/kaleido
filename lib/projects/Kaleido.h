@@ -2,6 +2,7 @@
 #ifndef BASE_KALEIDO_H
 #define BASE_KALEIDO_H
 
+#include <Arduino.h>
 #include <FastLED.h>
 #include "Fill.h"
 #include "Project.h"
@@ -10,14 +11,15 @@
 
 template<size_t NUM_LEDS>
 class BaseKaleido : public Project<NUM_LEDS> {
-protected:
+
+public:
+
     VirtualSegments<NUM_LEDS> lines_all;
     VirtualSegments<NUM_LEDS> lines;
     VirtualSegments<NUM_LEDS> dots;
     VirtualSegments<NUM_LEDS> facets;
     FillEffect fillEffect;
 
-public:
     BaseKaleido() : lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
                     dots(this->physicalSegments.leds),
@@ -32,12 +34,22 @@ public:
         // Add any additional initialization logic here
     }
 
+    bool red = false;
+
     void tick() override {
         // Add any additional initialization logic here
         FastLED.clear();
-        FillPainter::paint(dots.getSegments()[0], CRGB::Green);
-        FillPainter::paint(lines_all.getSegments()[0], CRGB::Red);
-        FillPainter::paint(facets.getSegments()[0], CRGB::Yellow);
+        if (red) {
+            red = false;
+            FillPainter::paint(dots.getSegments()[0], CRGB::Green);
+            FillPainter::paint(lines_all.getSegments()[0], CRGB::Red);
+            FillPainter::paint(facets.getSegments()[0], CRGB::Yellow);
+        } else {
+            red = true;
+            FillPainter::paint(dots.getSegments()[0], CRGB::Red);
+            FillPainter::paint(lines_all.getSegments()[0], CRGB::Green);
+            FillPainter::paint(facets.getSegments()[0], CRGB::Yellow);
+        }
         FastLED.show();
     }
 };
@@ -64,6 +76,11 @@ public:
         dots.addSegment(0, 6 * 50); // all the dots
         facets.addSegment(300, 1 * 50); // all the facets
         lines_all.addSegment(350, 8 * 192); // all the lines
+        lines.start = 350;
+        // auto segments = {11, 13, 11, 14, 12, 19, 17, 22, 23, 21, 23};
+        auto segments = {12, 5, 15, 9, 17, 10, 22, 15, 22, 17, 30, 16, 19, 32, 25, 26, 33, 28, 33, 26, 54, 21, 56, 30, 42, 55, 39, 55, 46, 55, 35, 57, 58, 70, 29};
+        lines.addSegments(segments);
+
     }
 };
 

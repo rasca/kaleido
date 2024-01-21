@@ -7,10 +7,9 @@
 #include "Segment.h"
 
 class ISegments {
-protected:
-    std::vector<Segment> segments;    // Segments
-
 public:
+    std::vector<Segment> segments;
+
     virtual ~ISegments() {}
     virtual Segment& addSegment(size_t start, size_t size) = 0;
     virtual void initialize() = 0;

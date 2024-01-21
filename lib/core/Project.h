@@ -5,10 +5,10 @@
 
 template<size_t NUM_LEDS>
 class Project {
-protected:
-    PhysicalSegments<NUM_LEDS> physicalSegments;  // Pointer to PhysicalSegmentManager
 
 public:
+    PhysicalSegments<NUM_LEDS> physicalSegments;  // Pointer to PhysicalSegmentManager
+
     Project() {
     }
 

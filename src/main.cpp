@@ -6,19 +6,24 @@ BigKaleido kaleido;
 Framework<1886U> framework(kaleido);
 
 void setup() {
-  // Serial.begin(9600);
+  Serial.begin(115200);
+  FastLED.setBrightness(20);
 
   framework.initialize();
-  // leds.setup();
+  framework.setupVirtualSegments(kaleido.lines);
 }
 
 unsigned long start = 0;
 
 void loop() {
 
-  if (millis() - start > 20) {
-    start = millis();
-    framework.tick();
-  }
+
+  // if (millis() - start > 2000) {
+  //   start = millis();
+  //   unsigned long duration = micros();
+  //   Serial.println(micros() - duration);
+  // }
+  framework.tick();
+
 
 }
