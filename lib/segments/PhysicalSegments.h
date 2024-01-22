@@ -13,7 +13,7 @@ public:
     std::array<CRGB, NUM_LEDS> leds;  // Main LED array
 
     Segment& addSegment(size_t start, size_t size) {
-        segments.emplace_back(&leds[start], size);
+        segments.emplace_back(&(leds)[0], start, size);
         return segments.back();
     }
 
