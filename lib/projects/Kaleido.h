@@ -17,12 +17,14 @@ public:
     VirtualSegments<NUM_LEDS> lines_all;
     VirtualSegments<NUM_LEDS> lines;
     VirtualSegments<NUM_LEDS> dots;
+    VirtualSegments<NUM_LEDS> dots_lines;
     VirtualSegments<NUM_LEDS> facets;
     FillEffect fillEffect;
 
     BaseKaleido() : lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
                     dots(this->physicalSegments.leds),
+                    dots_lines(this->physicalSegments.leds),
                     facets(this->physicalSegments.leds),
                     fillEffect(dots, CRGB::Green)
 
@@ -81,6 +83,10 @@ public:
         // std::vector<size_t> segments = {12, 5, 15, 9, 17, 10, 22, 15, 22, 17, 30, 16, 19, 32, 25, 26, 33, 28, 33, 26, 54, 21, 56, 30, 42, 55, 39, 55, 46, 55, 35, 57, 58, 70, 70, 70, 70, 70, 70};
         std::vector<std::vector<size_t>> segments = {{356, 3}, {363, 4}, {372, 7}, {384, 7}, {395, 10}, {408, 12}, {425, 11}, {441, 14}, {460, 15}, {481, 15}, {502, 16}, {524, 20}, {541, 19}, {566, 22}, {591, 23}, {619, 24}, {646, 25}, {677, 26}, {707, 27}, {736, 29}, {770, 31}, {812, 33}, {849, 33}, {892, 35}, {927, 37}, {974, 37}, {1019, 39}, {1068, 41}, {1117, 42}, {1166, 44}, {1216, 44}, {1265, 46}, {1316, 47}, {1376, 49}, {1435, 49}, {1502, 50}, {1557, 52}, {1624, 54}, {1694, 53}, {1755, 56}, {1817, 57}};
         lines.addSegments(segments);
+
+        std::vector<size_t> dots_segments = {5, 8, 9, 12, 17, 16, 16, 19, 19, 33, 20, 14, 16, 15, 18, 22};
+        dots_lines.addSegments(dots_segments);
+
 
     }
 };

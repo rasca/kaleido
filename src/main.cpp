@@ -10,7 +10,7 @@ void setup() {
   FastLED.setBrightness(20);
 
   framework.initialize();
-  framework.setupVirtualSegments(kaleido.lines);
+  framework.setupVirtualSegmentsLength(kaleido.dots_lines);
 }
 
 unsigned long start = 0;

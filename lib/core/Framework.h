@@ -5,6 +5,8 @@
 #include <Project.h>
 #include <VirtualSegments.h>
 #include <VirtualSegmentsManager.h>
+#include <VirtualSegmentsManagerLength.h>
+#include <VirtualSegmentsManagerCentered.h>
 
 template<size_t NUM_LEDS>
 class Framework {
@@ -30,12 +32,20 @@ public:
         project.tick();
     }
 
-    void setupVirtualSegments(std::array<CRGB, NUM_LEDS>& leds) {
-        virtualSegmentsManager = new VirtualSegmentsManager<NUM_LEDS>(leds, 350);
+    void setupVirtualSegmentsLength(std::array<CRGB, NUM_LEDS>& leds) {
+        virtualSegmentsManager = new VirtualSegmentsManagerLength<NUM_LEDS>(leds, 350);
     }
 
-    void setupVirtualSegments(VirtualSegments<NUM_LEDS>& virtualSegments) {
-        virtualSegmentsManager = new VirtualSegmentsManager<NUM_LEDS>(virtualSegments);
+    void setupVirtualSegmentsCentered(std::array<CRGB, NUM_LEDS>& leds) {
+        virtualSegmentsManager = new VirtualSegmentsManagerCentered<NUM_LEDS>(leds, 350);
+    }
+
+    void setupVirtualSegmentsLength(VirtualSegments<NUM_LEDS>& virtualSegments) {
+        virtualSegmentsManager = new VirtualSegmentsManagerLength<NUM_LEDS>(virtualSegments);
+    }
+
+    void setupVirtualSegmentsCentered(VirtualSegments<NUM_LEDS>& virtualSegments) {
+        virtualSegmentsManager = new VirtualSegmentsManagerCentered<NUM_LEDS>(virtualSegments);
     }
 };
 
