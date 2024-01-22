@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include "Fill.h"
+#include "Cylon.h"
 #include "Project.h"
 #include "PhysicalSegments.h"
 #include "VirtualSegments.h"
@@ -20,13 +21,15 @@ public:
     VirtualSegments<NUM_LEDS> dots_lines;
     VirtualSegments<NUM_LEDS> facets;
     FillEffect fillEffect;
+    Cylon cylon;
 
     BaseKaleido() : lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
                     dots(this->physicalSegments.leds),
                     dots_lines(this->physicalSegments.leds),
                     facets(this->physicalSegments.leds),
-                    fillEffect(dots, CRGB::Green)
+                    fillEffect(dots, CRGB::Green),
+                    cylon(lines, CRGB::Blue)
 
     {
         // Constructor initializes FillEffect with lines_all and CRGB::Red
@@ -41,17 +44,7 @@ public:
     void tick() override {
         // Add any additional initialization logic here
         FastLED.clear();
-        if (red) {
-            red = false;
-            FillPainter::paint(dots.getSegments()[0], CRGB::Green);
-            FillPainter::paint(lines_all.getSegments()[0], CRGB::Red);
-            FillPainter::paint(facets.getSegments()[0], CRGB::Yellow);
-        } else {
-            red = true;
-            FillPainter::paint(dots.getSegments()[0], CRGB::Red);
-            FillPainter::paint(lines_all.getSegments()[0], CRGB::Green);
-            FillPainter::paint(facets.getSegments()[0], CRGB::Yellow);
-        }
+        cylon.paint();
         FastLED.show();
     }
 };
