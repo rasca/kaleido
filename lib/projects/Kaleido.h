@@ -26,7 +26,7 @@ public:
     FillEffect fillEffect;
     Cylon cylon;
 
-    BaseKaleido() : wifi(WIFI_SSID, WIFI_PASSWORD),
+    BaseKaleido() : wifi((char*)WIFI_SSID, (char*)WIFI_PASSWORD),
                     lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
                     dots(this->physicalSegments.leds),
