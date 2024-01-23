@@ -21,6 +21,7 @@ public:
 
     void initialize() {
         // Initialization code
+        project.initialize(*this);
     }
 
     void tick() {

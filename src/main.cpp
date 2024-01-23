@@ -1,3 +1,4 @@
+#define FASTLED_INTERNAL  // remove FastLED build warning
 #include <Arduino.h>
 #include <Framework.h>
 #include <Kaleido.h>

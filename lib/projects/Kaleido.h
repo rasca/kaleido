@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include <FastLED.h>
+#include "Framework.h"
 #include "Fill.h"
 #include "Cylon.h"
 #include "Project.h"
@@ -35,7 +36,7 @@ public:
         // Constructor initializes FillEffect with lines_all and CRGB::Red
     }
 
-    void initialize() {
+    void initialize(Framework<NUM_LEDS>& framework) {
         // Add any additional initialization logic here
     }
 

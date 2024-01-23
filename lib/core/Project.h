@@ -1,18 +1,21 @@
 #ifndef PROJECT_H
 #define PROJECT_H
 
-#include "PhysicalSegments.h"
+#include <PhysicalSegments.h>
+
+// Forward declaration of Framework instead of #include <Framework.h> to avoid circular dependency
+template<size_t NUM_LEDS>
+class Framework;
 
 template<size_t NUM_LEDS>
 class Project {
-
 public:
     PhysicalSegments<NUM_LEDS> physicalSegments;  // Pointer to PhysicalSegmentManager
 
     Project() {
     }
 
-    void initialize() {
+    virtual void initialize(Framework<NUM_LEDS>& framework) {
         // Add any additional initialization logic here
     }
 
