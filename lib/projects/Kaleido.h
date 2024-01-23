@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include "Framework.h"
+#include "WifiCore.h"
 #include "Fill.h"
 #include "Cylon.h"
 #include "Project.h"
@@ -16,6 +17,7 @@ class BaseKaleido : public Project<NUM_LEDS> {
 
 public:
 
+    WifiCore wifi;
     VirtualSegments<NUM_LEDS> lines_all;
     VirtualSegments<NUM_LEDS> lines;
     VirtualSegments<NUM_LEDS> dots;
@@ -24,7 +26,8 @@ public:
     FillEffect fillEffect;
     Cylon cylon;
 
-    BaseKaleido() : lines_all(this->physicalSegments.leds),
+    BaseKaleido() : wifi(WIFI_SSID, WIFI_PASSWORD),
+                    lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
                     dots(this->physicalSegments.leds),
                     dots_lines(this->physicalSegments.leds),
@@ -38,6 +41,8 @@ public:
 
     void initialize(Framework<NUM_LEDS>& framework) {
         // Add any additional initialization logic here
+        wifi.setupAP();
+        wifi.setupServer();
     }
 
     bool red = false;

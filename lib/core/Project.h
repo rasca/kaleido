@@ -2,6 +2,7 @@
 #define PROJECT_H
 
 #include <PhysicalSegments.h>
+#include <credentials.h>
 
 // Forward declaration of Framework instead of #include <Framework.h> to avoid circular dependency
 template<size_t NUM_LEDS>
