@@ -5,10 +5,10 @@
 #include <Wand.h>
 
 BigKaleido kaleido;
-// Framework<1886U> framework(kaleido);
+Framework<1886U> framework(kaleido);
 
-Wand wand;
-Framework<0U> framework(wand);
+// Wand wand;
+// Framework<0U> framework(wand);
 
 void setup() {
   Serial.begin(115200);

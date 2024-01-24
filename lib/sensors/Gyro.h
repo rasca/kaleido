@@ -8,14 +8,26 @@
 #include <Wire.h>
 
 
+// struct for esp now sending of gyro data
+typedef struct gyro_data
+{
+    float a_x;
+    float a_y;
+    float a_z;
+    float g_x;
+    float g_y;
+    float g_z;
+    float t;
+} gyro_data;
+
+
 class Gyro {
 private:
     Adafruit_MPU6050 mpu;
-    sensors_event_t a, g, temp;
-    double acceleration;
-
 
 public:
+    sensors_event_t a, g, temp;
+
     void initialize(){
 
         Serial.println("Gyro init");

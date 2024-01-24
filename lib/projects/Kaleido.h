@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include "Framework.h"
+#include <Adafruit_Sensor.h>
 #include "WifiCore.h"
 #include "Fill.h"
 #include "Cylon.h"
@@ -26,6 +27,8 @@ public:
     FillEffect fillEffect;
     Cylon cylon;
 
+    sensors_event_t a, g, temp;
+
     BaseKaleido() : wifi((char*)WIFI_SSID, (char*)WIFI_PASSWORD),
                     lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
@@ -42,6 +45,10 @@ public:
     void initialize(Framework<NUM_LEDS>& framework) {
         // Add any additional initialization logic here
         wifi.setupAP();
+        // wifi.server.on("/gyro", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        //     this->processGyroData(request);
+        // });
+
         wifi.setupServer();
     }
 
@@ -52,6 +59,17 @@ public:
         FastLED.clear();
         cylon.paint();
         FastLED.show();
+    }
+
+    void processGyroData(AsyncWebServerRequest *request)
+    {
+        int params = request->params();
+        for (int i = 0; i < params; i++)
+        {
+            AsyncWebParameter *p = request->getParam(i);
+            // Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+        }
+        request->send_P(200, "text/plain", "OK");
     }
 };
 
