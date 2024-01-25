@@ -9,7 +9,7 @@
 
 
 // struct for esp now sending of gyro data
-typedef struct gyro_data
+typedef struct GyroData
 {
     float a_x;
     float a_y;
@@ -18,8 +18,9 @@ typedef struct gyro_data
     float g_y;
     float g_z;
     float t;
-} gyro_data;
+} GyroData;
 
+GyroData gyroData;  // ugly hack so that static methods needed for EspNow can access it
 
 class Gyro {
 private:

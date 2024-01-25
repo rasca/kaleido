@@ -5,20 +5,21 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include "Framework.h"
-#include <Adafruit_Sensor.h>
-#include "WifiCore.h"
+#include "EspNow.h"
+#include "Gyro.h"
 #include "Fill.h"
 #include "Cylon.h"
 #include "Project.h"
 #include "PhysicalSegments.h"
 #include "VirtualSegments.h"
 
+
 template<size_t NUM_LEDS>
 class BaseKaleido : public Project<NUM_LEDS> {
 
 public:
 
-    WifiCore wifi;
+    EspNow<GyroData> espNow;
     VirtualSegments<NUM_LEDS> lines_all;
     VirtualSegments<NUM_LEDS> lines;
     VirtualSegments<NUM_LEDS> dots;
@@ -27,10 +28,7 @@ public:
     FillEffect fillEffect;
     Cylon cylon;
 
-    sensors_event_t a, g, temp;
-
-    BaseKaleido() : wifi((char*)WIFI_SSID, (char*)WIFI_PASSWORD),
-                    lines_all(this->physicalSegments.leds),
+    BaseKaleido() : lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
                     dots(this->physicalSegments.leds),
                     dots_lines(this->physicalSegments.leds),
@@ -43,13 +41,7 @@ public:
     }
 
     void initialize(Framework<NUM_LEDS>& framework) {
-        // Add any additional initialization logic here
-        wifi.setupAP();
-        // wifi.server.on("/gyro", HTTP_POST, [this](AsyncWebServerRequest *request) {
-        //     this->processGyroData(request);
-        // });
-
-        wifi.setupServer();
+        espNow.setup(OnDataRecv, OnDataSent);
     }
 
     bool red = false;
@@ -61,15 +53,17 @@ public:
         FastLED.show();
     }
 
-    void processGyroData(AsyncWebServerRequest *request)
+    static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
     {
-        int params = request->params();
-        for (int i = 0; i < params; i++)
-        {
-            AsyncWebParameter *p = request->getParam(i);
-            // Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-        }
-        request->send_P(200, "text/plain", "OK");
+        Serial.print("\r\nLast Packet Send Status:\t");
+        Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    }
+    static void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
+        memcpy(&gyroData, incomingData, sizeof(gyroData));
+        Serial.print("Bytes received: ");
+        Serial.println(len);
+        Serial.println(gyroData.a_x);
+
     }
 };
 

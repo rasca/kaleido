@@ -13,23 +13,21 @@ class Wand : public Project<0> {
 
 public:
 
-    EspNow<gyro_data> espNow;
+    EspNow<GyroData> espNow;
     Gyro gyro;
 
     void initialize(Framework<0>& framework) {
-        espNow.setup(
-            std::bind(&Wand::OnDataRecv, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
-            std::bind(&Wand::OnDataSent, this, std::placeholders::_1, std::placeholders::_2)
-        );
+        espNow.setup(OnDataRecv, OnDataSent);
+        espNow.setupBroadcast();
         gyro.initialize();
     }
 
-    void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+    static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
     {
         Serial.print("\r\nLast Packet Send Status:\t");
         Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
     }
-    void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {}
+    static void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {}
 
     void tick() override {
         gyro.tick();
