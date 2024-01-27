@@ -9,10 +9,10 @@
 class Cylon : public Effect {
 
 private:
-    CRGB color;
     long step = 0;
 
 public:
+    CRGB color;
     Cylon(ISegments& segments, CRGB col) : Effect(segments), color(col) {}
 
     void paint() override {

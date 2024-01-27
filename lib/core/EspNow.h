@@ -59,11 +59,11 @@ public:
 
         if (result == ESP_OK)
         {
-            Serial.println("Sent with success");
+            // Serial.println("Sent with success");
         }
         else
         {
-            Serial.println("Error sending the data");
+            // Serial.println("Error sending the data");
         }
     }
 

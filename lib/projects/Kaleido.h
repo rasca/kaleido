@@ -44,25 +44,28 @@ public:
         espNow.setup(OnDataRecv, OnDataSent);
     }
 
-    bool red = false;
 
+    float hue = 0;
     void tick() override {
         // Add any additional initialization logic here
         FastLED.clear();
+
+        hue += gyroData.g_x * 10;
+        Serial.print(hue);
+        Serial.print("\t");
+        Serial.println(gyroData.g_x);
+        if (hue > 360) hue -= 360;
+        if (hue < 0) hue += 360;
+        cylon.color = CHSV(hue, 255, 255);
         cylon.paint();
         FastLED.show();
     }
 
     static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
     {
-        Serial.print("\r\nLast Packet Send Status:\t");
-        Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
     }
     static void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
         memcpy(&gyroData, incomingData, sizeof(gyroData));
-        Serial.print("Bytes received: ");
-        Serial.println(len);
-        Serial.println(gyroData.a_x);
 
     }
 };
