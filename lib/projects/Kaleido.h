@@ -12,6 +12,7 @@
 #include "Project.h"
 #include "PhysicalSegments.h"
 #include "VirtualSegments.h"
+#include "Utils.h"
 
 
 template<size_t NUM_LEDS>
@@ -19,7 +20,7 @@ class BaseKaleido : public Project<NUM_LEDS> {
 
 public:
 
-    EspNow<GyroData> espNow;
+    EspNow<VectorFloat> espNow;
     VirtualSegments<NUM_LEDS> lines_all;
     VirtualSegments<NUM_LEDS> lines;
     VirtualSegments<NUM_LEDS> dots;
@@ -50,10 +51,12 @@ public:
         // Add any additional initialization logic here
         FastLED.clear();
 
-        hue += gyroData.g_x * 10;
+        Gyro::print(gyroData);
+        hue = map(gyroData.x, -180, 180, 0, 255);
+
         Serial.print(hue);
         Serial.print("\t");
-        Serial.println(gyroData.g_x);
+        Serial.println(gyroData.x);
         if (hue > 360) hue -= 360;
         if (hue < 0) hue += 360;
         cylon.color = CHSV(hue, 255, 255);

@@ -13,7 +13,7 @@ class Wand : public Project<0> {
 
 public:
 
-    EspNow<GyroData> espNow;
+    EspNow<VectorFloat> espNow;
     Gyro gyro;
 
     void initialize(Framework<0>& framework) {
@@ -33,13 +33,7 @@ public:
         gyro.tick();
         // gyro.print();
 
-        espNow.data.a_x = gyro.a.acceleration.x;
-        espNow.data.a_y = gyro.a.acceleration.y;
-        espNow.data.a_z = gyro.a.acceleration.z;
-        espNow.data.g_x = gyro.g.gyro.x;
-        espNow.data.g_y = gyro.g.gyro.y;
-        espNow.data.g_z = gyro.g.gyro.z;
-        espNow.data.t = gyro.temp.temperature;
+        espNow.data = gyro.ypr;
 
         espNow.send();
     }
