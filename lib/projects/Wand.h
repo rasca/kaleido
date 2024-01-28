@@ -13,7 +13,7 @@ class Wand : public Project<0> {
 
 public:
 
-    EspNow<VectorFloat> espNow;
+    EspNow<GyroData> espNow;
     Gyro gyro;
 
     void initialize(Framework<0>& framework) {
@@ -33,7 +33,7 @@ public:
         gyro.tick();
         // gyro.print();
 
-        espNow.data = gyro.ypr;
+        espNow.data = gyroData;
 
         espNow.send();
     }

@@ -14,17 +14,14 @@
 // struct for esp now sending of gyro data
 typedef struct GyroData
 {
-    float a_x;
-    float a_y;
-    float a_z;
-    float g_x;
-    float g_y;
-    float g_z;
-    float t;
+    float yaw, pitch, roll;
+    float q_w, q_x, q_y, q_z;
+    float qAcc_w, qAcc_x, qAcc_y, qAcc_z;
+    int16_t accel_x, accel_y, accel_z;
+    int16_t gyro_x, gyro_y, gyro_z;
 } GyroData;
 
-// GyroData gyroData;  // ugly hack so that static methods needed for EspNow can access it
-VectorFloat gyroData;
+GyroData gyroData;  // ugly hack so that static methods needed for EspNow can access it
 
 volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 void dmpDataReady() {
@@ -48,7 +45,6 @@ public:
     int16_t gx, gy, gz;
 
     void initialize(){
-
         Serial.println("Gyro init");
         Wire.begin();
         Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
@@ -112,73 +108,78 @@ public:
         }
     }
 
-    VectorFloat accumulatedRotation;
 
-    Quaternion q;
-
-    void getQuaternion(Quaternion& q) {
+    Quaternion getQuaternion() {
+        Quaternion q;
         mpu.dmpGetQuaternion(&q, fifoBuffer);
+        gyroData.q_w = q.w;
+        gyroData.q_x = q.x;
+        gyroData.q_y = q.y;
+        gyroData.q_z = q.z;
+        return q;
     }
 
-    VectorFloat ypr;
 
-    VectorFloat getYawPitchRoll()
+    void getYawPitchRoll()
     {
         // Code from http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
         // referenced by https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
 
-        mpu.dmpGetQuaternion(&q, fifoBuffer);
+        Quaternion q = getQuaternion();
 
         float test = q.x * q.y + q.z * q.w;
         if (test > 0.499)
         { // singularity at north pole
-            ypr.x = 2 * atan2(q.x, q.w);
-            ypr.y = M_PI / 2;
-            ypr.z = 0;
+            gyroData.yaw = 2 * atan2(q.x, q.w);
+            gyroData.pitch = M_PI / 2;
+            gyroData.roll = 0;
         }
         else if (test < -0.499)
         { // singularity at south pole
-            ypr.x = -2 * atan2(q.x, q.w);
-            ypr.y = -M_PI / 2;
-            ypr.z = 0;
+            gyroData.yaw = -2 * atan2(q.x, q.w);
+            gyroData.pitch = -M_PI / 2;
+            gyroData.roll = 0;
         }
         else
         {
             float sqx = q.x * q.x;
             float sqy = q.y * q.y;
             float sqz = q.z * q.z;
-            ypr.x = atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * sqy - 2 * sqz);
-            ypr.y = asin(2 * test);
-            ypr.z = atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * sqx - 2 * sqz);
+            gyroData.yaw = atan2(2 * q.y * q.w - 2 * q.x * q.z, 1 - 2 * sqy - 2 * sqz);
+            gyroData.pitch = asin(2 * test);
+            gyroData.roll = atan2(2 * q.x * q.w - 2 * q.y * q.z, 1 - 2 * sqx - 2 * sqz);
         }
 
-        ypr.x = ypr.x * 180.0f / M_PI;
-        ypr.y = ypr.y * 180.0f / M_PI;
-        ypr.z = ypr.z * 180.0f / M_PI;
-        return ypr;
+        gyroData.yaw = gyroData.yaw * 180.0f / M_PI;
+        gyroData.pitch = gyroData.pitch * 180.0f / M_PI;
+        gyroData.roll = gyroData.roll * 180.0f / M_PI;
     }
 
+
     Quaternion lastQuaternion;
-    Quaternion qAcc;
 
     Quaternion getAccQuaternionDifference()
     {
-        mpu.dmpGetQuaternion(&q, fifoBuffer);
-        qAcc.w += q.w - lastQuaternion.w;
-        qAcc.x += q.x - lastQuaternion.x;
-        qAcc.y += q.y - lastQuaternion.y;
-        qAcc.z += q.z - lastQuaternion.z;
+        Quaternion q = getQuaternion();
+        gyroData.qAcc_w += q.w - lastQuaternion.w;
+        gyroData.qAcc_x += q.x - lastQuaternion.x;
+        gyroData.qAcc_y += q.y - lastQuaternion.y;
+        gyroData.qAcc_z += q.z - lastQuaternion.z;
         lastQuaternion = q;
-        return qAcc;
+        return q;
     }
-
-    VectorInt16 accel;
-    VectorInt16 gyro;
 
     void getRawAccelGyro()
     {
+        VectorInt16 accel, gyro;
         mpu.dmpGetAccel(&accel, fifoBuffer);
         mpu.dmpGetGyro(&gyro, fifoBuffer);
+        gyroData.accel_x = accel.x;
+        gyroData.accel_y = accel.y;
+        gyroData.accel_z = accel.z;
+        gyroData.gyro_x = gyro.x;
+        gyroData.gyro_y = gyro.y;
+        gyroData.gyro_z = gyro.z;
     }
 
     static void print(VectorFloat& v) {
@@ -213,50 +214,85 @@ public:
         Serial.print("\t");
     }
 
+    static void print(GyroData& data) {
+        Serial.print("yaw:\t");
+        Serial.print(data.yaw);
+        Serial.print("\tpitch:\t");
+        Serial.print(data.pitch);
+        Serial.print("\troll:\t");
+        Serial.print(data.roll);
+        Serial.print("\t");
+
+        Serial.print("q:\t");
+        Serial.print(data.q_w);
+        Serial.print("\t");
+        Serial.print(data.q_x);
+        Serial.print("\t");
+        Serial.print(data.q_y);
+        Serial.print("\t");
+        Serial.print(data.q_z);
+        Serial.print("\t");
+
+        Serial.print("q diff acc:\t");
+        Serial.print(data.qAcc_w);
+        Serial.print("\t");
+        Serial.print(data.qAcc_x);
+        Serial.print("\t");
+        Serial.print(data.qAcc_y);
+        Serial.print("\t");
+        Serial.print(data.qAcc_z);
+        Serial.print("\t");
+
+        Serial.print("accel:\t");
+        Serial.print(data.accel_x);
+        Serial.print("\t");
+        Serial.print(data.accel_y);
+        Serial.print("\t");
+        Serial.print(data.accel_z);
+        Serial.print("\t");
+
+        Serial.print("gyro:\t");
+        Serial.print(data.gyro_x);
+        Serial.print("\t");
+        Serial.print(data.gyro_y);
+        Serial.print("\t");
+        Serial.print(data.gyro_z);
+        Serial.print("\t");
+
+        Serial.println("");
+    }
+
     void tick() {
         if (!dmpReady)
             return;
         // read a packet from FIFO
         if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer))
         { // Get the Latest packet
-            ypr = getYawPitchRoll();
+            getYawPitchRoll();
             // Serial.print("ypr\t");
             // print(ypr);
             // Serial.println();
 
-            // Quaternion q = getAccQuaternionDifference();
+            getQuaternion();
             // Serial.print("q\t");
             // print(q);
             // Serial.println();
 
-            // getRawAccelGyro();
+            getAccQuaternionDifference();
+            // Serial.print("q\t");
+            // print(q);
+            // Serial.println();
+
+            // gyroData.accel & gyroData.gyro
+            getRawAccelGyro();
             // Serial.print("accel\t");
             // print(accel);
             // Serial.print("gyro\t");
             // print(gyro);
             // Serial.println();
-        }
-    }
 
-    void print() {
-        Serial.print("AccelX:");
-        Serial.print(ax);
-        Serial.print(",\t");
-        Serial.print("AccelY:");
-        Serial.print(ay);
-        Serial.print(",\t");
-        Serial.print("AccelZ:");
-        Serial.print(az);
-        Serial.print(",\t");
-        Serial.print("GyroX:");
-        Serial.print(gx);
-        Serial.print(",\t");
-        Serial.print("GyroY:");
-        Serial.print(gy);
-        Serial.print(",\t");
-        Serial.print("GyroZ:");
-        Serial.print(gz);
-        Serial.println("");
+            // print(gyroData);
+        }
     }
 };
 

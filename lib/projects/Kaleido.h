@@ -20,7 +20,7 @@ class BaseKaleido : public Project<NUM_LEDS> {
 
 public:
 
-    EspNow<VectorFloat> espNow;
+    EspNow<GyroData> espNow;
     VirtualSegments<NUM_LEDS> lines_all;
     VirtualSegments<NUM_LEDS> lines;
     VirtualSegments<NUM_LEDS> dots;
@@ -49,14 +49,14 @@ public:
     float hue = 0;
     void tick() override {
         // Add any additional initialization logic here
-        FastLED.clear();
+        // FastLED.clear();
 
-        Gyro::print(gyroData);
-        hue = map(gyroData.x, -180, 180, 0, 255);
+        // Gyro::print(gyroData);
+        hue = map(gyroData.yaw, -180, 180, 0, 255);
+        cylon.step = gyroData.accel_x / 1000;
 
-        Serial.print(hue);
-        Serial.print("\t");
-        Serial.println(gyroData.x);
+        Serial.print(gyroData.accel_x / 1000);
+        Serial.println("\t");
         if (hue > 360) hue -= 360;
         if (hue < 0) hue += 360;
         cylon.color = CHSV(hue, 255, 255);

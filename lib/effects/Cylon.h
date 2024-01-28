@@ -8,10 +8,8 @@
 
 class Cylon : public Effect {
 
-private:
-    long step = 0;
-
 public:
+    long step = 0;
     CRGB color;
     Cylon(ISegments& segments, CRGB col) : Effect(segments), color(col) {}
 
