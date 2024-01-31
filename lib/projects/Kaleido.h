@@ -8,7 +8,8 @@
 #include "EspNow.h"
 #include "Gyro.h"
 #include "Fill.h"
-#include "Cylon.h"
+#include "Start.h"
+#include "Outwards.h"
 #include "Project.h"
 #include "PhysicalSegments.h"
 #include "VirtualSegments.h"
@@ -27,7 +28,8 @@ public:
     VirtualSegments<NUM_LEDS> dots_lines;
     VirtualSegments<NUM_LEDS> facets;
     FillEffect fillEffect;
-    Cylon cylon;
+    Start start;
+    Outwards outwards;
 
     BaseKaleido() : lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
@@ -35,7 +37,8 @@ public:
                     dots_lines(this->physicalSegments.leds),
                     facets(this->physicalSegments.leds),
                     fillEffect(dots, CRGB::Green),
-                    cylon(lines, CRGB::Blue)
+                    start(facets, dots, lines_all, lines),
+                    outwards(lines)
 
     {
         // Constructor initializes FillEffect with lines_all and CRGB::Red
@@ -45,22 +48,11 @@ public:
         espNow.setup(OnDataRecv, OnDataSent);
     }
 
-
-    float hue = 0;
     void tick() override {
         // Add any additional initialization logic here
         // FastLED.clear();
-
-        // Gyro::print(gyroData);
-        hue = map(gyroData.yaw, -180, 180, 0, 255);
-        cylon.step = gyroData.accel_x / 1000;
-
-        Serial.print(gyroData.accel_x / 1000);
-        Serial.println("\t");
-        if (hue > 360) hue -= 360;
-        if (hue < 0) hue += 360;
-        cylon.color = CHSV(hue, 255, 255);
-        cylon.paint();
+        outwards.paint();
+        // start.paint();
         FastLED.show();
     }
 

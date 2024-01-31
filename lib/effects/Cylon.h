@@ -11,7 +11,7 @@ class Cylon : public Effect {
 public:
     long step = 0;
     CRGB color;
-    Cylon(ISegments& segments, CRGB col) : Effect(segments), color(col) {}
+    Cylon(ISegments& segments, CRGB col=CRGB::Blue) : Effect(segments), color(col) {}
 
     void paint() override {
 
