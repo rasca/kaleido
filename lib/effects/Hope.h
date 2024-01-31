@@ -21,12 +21,12 @@ public:
     void paint() override
     {
         // Gyro::print(gyroData);
-        hue = map(gyroData.yaw, -180, 180, 0, 255);
+        hue = map(gyroData.yaw, (float)-M_PI, (float)M_PI, 0, 255);
         step++;
         cylon.step = step + gyroData.accel_x / 1000;
 
-        Serial.print(gyroData.accel_x / 1000);
-        Serial.println("\t");
+        // Serial.print(gyroData.accel_x / 1000);
+        // Serial.println("\t");
         if (hue > 360) hue -= 360;
         if (hue < 0) hue += 360;
         cylon.color = CHSV(hue, 255, 255);

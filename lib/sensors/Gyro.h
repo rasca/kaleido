@@ -7,6 +7,7 @@
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 #include <helper_3dmath.h>
+#include <Utils.h>
 
 #define INTERRUPT_PIN 19
 
@@ -155,6 +156,12 @@ public:
         gyroData.roll = gyroData.roll * 180.0f / M_PI;
     }
 
+    void getYawPitchRoll2()
+    {
+        Quaternion q = getQuaternion();
+        calculateEulerAngles(q, 2, 3, 1, gyroData.yaw, gyroData.pitch, gyroData.roll);
+    }
+
 
     Quaternion lastQuaternion;
 
@@ -181,6 +188,7 @@ public:
         gyroData.gyro_y = gyro.y;
         gyroData.gyro_z = gyro.z;
     }
+
 
     static void print(VectorFloat& v) {
         Serial.print("vector\t");
@@ -268,9 +276,13 @@ public:
         // read a packet from FIFO
         if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer))
         { // Get the Latest packet
-            getYawPitchRoll();
+            getYawPitchRoll2();
             // Serial.print("ypr\t");
-            // print(ypr);
+            // Serial.print(gyroData.yaw);
+            // Serial.print("\t");
+            // Serial.print(gyroData.pitch);
+            // Serial.print("\t");
+            // Serial.print(gyroData.roll);
             // Serial.println();
 
             getQuaternion();

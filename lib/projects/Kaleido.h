@@ -51,8 +51,8 @@ public:
     void tick() override {
         // Add any additional initialization logic here
         // FastLED.clear();
-        outwards.paint();
-        // start.paint();
+        // outwards.paint();
+        start.paint();
         FastLED.show();
     }
 

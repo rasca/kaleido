@@ -29,11 +29,30 @@ public:
     }
     static void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {}
 
-    void tick() override {
+    void tick() override
+    {
         gyro.tick();
         // gyro.print();
 
         espNow.data = gyroData;
+
+        // Angular distance:
+        // Quaternion qr0(1, 0, 0, 0);
+        // Quaternion qr1(0, 1, 0, 0);
+        // Quaternion qr2(0, 0, 1, 0);
+        // Quaternion qr3(0, 0, 0, 1);
+        // Quaternion q(gyroData.q_w, gyroData.q_x, gyroData.q_y, gyroData.q_z);
+
+        // Serial.print(getAngularDistance(qr0, q));
+        // Serial.print("\t");
+        // Serial.print(getAngularDistance(qr1, q));
+        // Serial.print("\t");
+        // Serial.print(getAngularDistance(qr2, q));
+        // Serial.print("\t");
+        // Serial.print(getAngularDistance(qr3, q));
+        // Serial.print("\t");
+        // Serial.println("");
+
 
         espNow.send();
     }
