@@ -49,12 +49,22 @@ public:
         FastLED.clear();
     }
 
+    long long lastPaint = 0;
+    int paintInterval = 40; // millis
+
     void tick() override {
+
+        if (millis() - lastPaint > paintInterval) {
+            paint();
+        }
+    }
+
+    void paint() {
         // Add any additional initialization logic here
         // FastLED.clear();
-        outwards.paint();
-        // start.paint();
+        lastPaint = millis();
         FastLED.show();
+        outwards.paint();
     }
 
     static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)

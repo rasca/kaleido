@@ -50,7 +50,7 @@ public:
 
     std::array<int, 50> raysCreated;
     void paint() override {
-        Serial.println("");
+        // Serial.println("");
         for (auto& segment : segments.getSegments()) {
             FadePainter::paint(segment, 80);
         }
@@ -64,11 +64,11 @@ public:
         // Serial.print("rayRate ");
         // Serial.print(rayRate);
         // Serial.print("\t");
-        Serial.print(gyroData.yaw);
-        Serial.print("\t");
-        Serial.print(gyroData.pitch);
-        Serial.print("\t");
-        Serial.println(gyroData.roll);
+        // Serial.print(gyroData.yaw);
+        // Serial.print("\t");
+        // Serial.print(gyroData.pitch);
+        // Serial.print("\t");
+        // Serial.println(gyroData.roll);
         int newRays = calculateRaysToCreate();
         // Serial.print("New rays ");
         // Serial.print(newRays);
