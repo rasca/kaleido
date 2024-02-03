@@ -46,13 +46,14 @@ public:
 
     void initialize(Framework<NUM_LEDS>& framework) {
         espNow.setup(OnDataRecv, OnDataSent);
+        FastLED.clear();
     }
 
     void tick() override {
         // Add any additional initialization logic here
         // FastLED.clear();
-        // outwards.paint();
-        start.paint();
+        outwards.paint();
+        // start.paint();
         FastLED.show();
     }
 
@@ -80,8 +81,12 @@ public:
         // lines
         segment = physicalSegments.addSegment(350, 2 * 192);  // 1 x 50led string
         FastLED.addLeds<WS2812, 12, GRB>(&(segment.getLEDs()[0]), segment.getSize());
-        segment = physicalSegments.addSegment(734, 6 * 192);  // 1 x 50led string
+        segment = physicalSegments.addSegment(734, 2 * 192);  // 1 x 50led string
         FastLED.addLeds<WS2812, 25, GRB>(&(segment.getLEDs()[0]), segment.getSize());
+        segment = physicalSegments.addSegment(1118, 2 * 192);  // 1 x 50led string
+        FastLED.addLeds<WS2812, 32, GRB>(&(segment.getLEDs()[0]), segment.getSize());
+        segment = physicalSegments.addSegment(1502, 2 * 192);  // 1 x 50led string
+        FastLED.addLeds<WS2812, 33, GRB>(&(segment.getLEDs()[0]), segment.getSize());
 
         // Add virtual segments
         dots.addSegment(0, 6 * 50); // all the dots

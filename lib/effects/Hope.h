@@ -29,7 +29,7 @@ public:
         // Serial.println("\t");
         if (hue > 360) hue -= 360;
         if (hue < 0) hue += 360;
-        cylon.color = CHSV(hue, 255, 255);
+        cylon.color = CHSV(hue, 255, 128);
         cylon.paint();
         FastLED.show();
     }
