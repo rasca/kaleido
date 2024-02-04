@@ -11,6 +11,7 @@
 #include "Start.h"
 #include "Stars.h"
 #include "Outwards.h"
+#include "Sines.h"
 #include "Project.h"
 #include "PhysicalSegments.h"
 #include "VirtualSegments.h"
@@ -32,6 +33,7 @@ public:
     Start start;
     Outwards outwards;
     Stars stars;
+    Sines sines;
 
     BaseKaleido() : lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
@@ -41,7 +43,8 @@ public:
                     fillEffect(dots, CRGB::Green),
                     start(facets, dots, lines_all, lines),
                     outwards(lines),
-                    stars(dots)
+                    stars(dots),
+                    sines(lines)
 
     {
         // Constructor initializes FillEffect with lines_all and CRGB::Red
@@ -67,7 +70,7 @@ public:
         // FastLED.clear();
         lastPaint = millis();
         FastLED.show();
-        stars.paint();
+        sines.paint();
         // outwards.paint();
     }
 
