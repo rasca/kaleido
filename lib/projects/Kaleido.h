@@ -7,15 +7,11 @@
 #include "Framework.h"
 #include "EspNow.h"
 #include "Gyro.h"
-#include "Fill.h"
-#include "Start.h"
-#include "Stars.h"
-#include "Outwards.h"
-#include "Sines.h"
 #include "Project.h"
 #include "PhysicalSegments.h"
 #include "VirtualSegments.h"
 #include "Utils.h"
+#include "Choreographer.h"
 
 
 template<size_t NUM_LEDS>
@@ -29,23 +25,15 @@ public:
     VirtualSegments<NUM_LEDS> dots;
     VirtualSegments<NUM_LEDS> dots_lines;
     VirtualSegments<NUM_LEDS> facets;
-    FillEffect fillEffect;
-    Start start;
-    Outwards outwards;
-    Stars stars;
-    Sines sines;
+
+    Choreographer<NUM_LEDS> choreographer;
 
     BaseKaleido() : lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
                     dots(this->physicalSegments.leds),
                     dots_lines(this->physicalSegments.leds),
                     facets(this->physicalSegments.leds),
-                    fillEffect(dots, CRGB::Green),
-                    start(facets, dots, lines_all, lines),
-                    outwards(lines),
-                    stars(dots),
-                    sines(lines)
-
+                    choreographer(*this)
     {
         // Constructor initializes FillEffect with lines_all and CRGB::Red
     }
@@ -61,25 +49,14 @@ public:
     void tick() override {
 
         if (millis() - lastPaint > paintInterval) {
-            paint();
+            lastPaint = millis();
+            choreographer.paint();
+            FastLED.show();
         }
     }
-
-    void paint() {
-        // Add any additional initialization logic here
-        // FastLED.clear();
-        lastPaint = millis();
-        FastLED.show();
-        sines.paint();
-        // outwards.paint();
-    }
-
-    static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
-    {
-    }
+    static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {}
     static void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
         memcpy(&gyroData, incomingData, sizeof(gyroData));
-
     }
 };
 

@@ -8,13 +8,19 @@
 class Sines : public Effect {
 public:
     Sines(ISegments& segments) : Effect(segments) {}
+    float step;
 
-    long step;
+    float minLength = 1.0f;
+    float maxLength = 5.0f;
+    float minStepVelocity = 1.0f;
+    float maxStepVelocity = 2.5f;
+
     bool paint() override {
-        step += mapf(gyroData.pitch, (float)-M_PI/2, (float)M_PI/2, 1.0f, 2.5f);
-        // 2 good options
-        // int length = mapf(gyroData.roll, (float)-M_PI/2, (float)M_PI/2, 1.0f, 5.0f);
-        int length = mapf(gyroData.roll, (float)-M_PI/2, (float)M_PI/2, 5.0f, 15.0f);
+        Serial.println("Sines::paint()");
+        Serial.print("gyroData.pitch: ");
+        Serial.println(gyroData.pitch);
+        step += mapf(gyroData.pitch, (float)-M_PI/2, (float)M_PI/2, minStepVelocity, maxStepVelocity);
+        int length = mapf(gyroData.roll, (float)-M_PI/2, (float)M_PI/2, minLength, maxLength);
         auto& segmentsVector = segments.getSegments();
 
         for (int i = 0; i < segmentsVector.size(); i++) {

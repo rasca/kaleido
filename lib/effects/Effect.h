@@ -18,6 +18,8 @@ public:
         return false;
     }
 
+    Effect(const Effect& other) : segments(other.segments) {}
+
     Effect &operator=(Effect &&other) noexcept
     {
         // Guard self assignment
