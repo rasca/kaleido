@@ -8,12 +8,14 @@
 #include "Project.h"
 #include "EspNow.h"
 #include "Gyro.h"
+#include "Utils.h"
 
 class Wand : public Project<0> {
 
 public:
 
     EspNow<GyroData> espNow;
+    int16_t lastAccelX, lastAccelY, lastAccelZ;
     Gyro gyro;
 
     void initialize(Framework<0>& framework) {
@@ -54,7 +56,14 @@ public:
         // Serial.println("");
 
 
-        espNow.send();
+        int16_t accelDelta = abs(gyroData.accel_x - lastAccelX) + abs(gyroData.accel_y - lastAccelY) + abs(gyroData.accel_z - lastAccelZ);
+        if (accelDelta > 30)
+        {
+            espNow.send();
+        }
+        lastAccelX = gyroData.accel_x;
+        lastAccelY = gyroData.accel_y;
+        lastAccelZ = gyroData.accel_z;
     }
 };
 
