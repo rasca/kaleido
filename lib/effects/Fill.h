@@ -24,11 +24,12 @@ private:
 public:
     FillEffect(ISegments& segments, CRGB col) : Effect(segments), color(col) {}
 
-    void paint() override {
+    bool paint() override {
         auto& segmentsVector = segments.getSegments();
         for (auto& segment : segmentsVector) {
             FillPainter::paint(segment, color);
         }
+        return false;
     }
 };
 

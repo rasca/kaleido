@@ -22,11 +22,12 @@ private:
 public:
     Fade(ISegments& segments, uint8_t fadeBy) : Effect(segments), fadeBy(fadeBy) {}
 
-    void paint() override {
+    bool paint() override {
         auto& segmentsVector = segments.getSegments();
         for (auto& segment : segmentsVector) {
             FadePainter::paint(segment, fadeBy);
         }
+        return false;
     }
 };
 

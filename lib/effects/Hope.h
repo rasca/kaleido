@@ -18,7 +18,7 @@ public:
 
     Hope(ISegments& segments) : Effect(segments), cylon(segments) {}
 
-    void paint() override
+    bool paint() override
     {
         // Gyro::print(gyroData);
         hue = map(gyroData.yaw, (float)-M_PI, (float)M_PI, 0, 255);
@@ -32,6 +32,7 @@ public:
         cylon.color = CHSV(hue, 255, 128);
         cylon.paint();
         FastLED.show();
+        return false;
     }
 };
 

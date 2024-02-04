@@ -13,7 +13,7 @@ public:
     CRGB color;
     Cylon(ISegments& segments, CRGB col=CRGB::Blue) : Effect(segments), color(col) {}
 
-    void paint() override {
+    bool paint() override {
 
         auto& segmentsVector = segments.getSegments();
         size_t i;
@@ -24,6 +24,7 @@ public:
                 segmentsVector[i].getLEDs()[segmentsVector[i].getSize() - step % segmentsVector[i].getSize()] = color;
         }
         step++;
+        return false;
     }
 };
 

@@ -9,6 +9,7 @@
 #include "Gyro.h"
 #include "Fill.h"
 #include "Start.h"
+#include "Stars.h"
 #include "Outwards.h"
 #include "Project.h"
 #include "PhysicalSegments.h"
@@ -30,6 +31,7 @@ public:
     FillEffect fillEffect;
     Start start;
     Outwards outwards;
+    Stars stars;
 
     BaseKaleido() : lines_all(this->physicalSegments.leds),
                     lines(this->physicalSegments.leds),
@@ -38,7 +40,8 @@ public:
                     facets(this->physicalSegments.leds),
                     fillEffect(dots, CRGB::Green),
                     start(facets, dots, lines_all, lines),
-                    outwards(lines)
+                    outwards(lines),
+                    stars(dots)
 
     {
         // Constructor initializes FillEffect with lines_all and CRGB::Red
@@ -64,7 +67,8 @@ public:
         // FastLED.clear();
         lastPaint = millis();
         FastLED.show();
-        outwards.paint();
+        stars.paint();
+        // outwards.paint();
     }
 
     static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)

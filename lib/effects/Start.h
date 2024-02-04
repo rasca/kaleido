@@ -37,7 +37,7 @@ public:
     const long START_LINES = 650;
     const long ONLY_LINES = 1500;
 
-    void paint() override
+    bool paint() override
     {
         // facets.start(
         //     new Hope(facets)
@@ -68,6 +68,7 @@ public:
             dots_fade.paint();
             lines.paint();
         }
+        return false;
     }
 };
 

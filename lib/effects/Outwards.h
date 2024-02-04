@@ -49,7 +49,7 @@ public:
     // values less than 1 means multiple rays should be created each frame
 
     std::array<int, 50> raysCreated;
-    void paint() override {
+    bool paint() override {
         // Serial.println("");
         for (auto& segment : segments.getSegments()) {
             FadePainter::paint(segment, 80);
@@ -111,6 +111,7 @@ public:
             }
         }
         step++;
+        return false;
     }
 
     int calculateRaysToCreate()
