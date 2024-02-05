@@ -10,9 +10,25 @@
 #include "Stars.h"
 #include "Outwards.h"
 #include "Sines.h"
+#include "Running.h"
 
 template<size_t NUM_LEDS>  // forward declaration
 class BaseKaleido;
+
+class OutwardsAll : public Effect {
+public:
+    Outwards lines;
+    Outwards dots_lines;
+    Outwards facets;
+    OutwardsAll(ISegments& lines, ISegments& dots_lines, ISegments& facets) : Effect(lines), lines(lines), dots_lines(dots_lines), facets(facets) {}
+
+    bool paint() override {
+        lines.paint();
+        dots_lines.paint();
+        facets.paint();
+        return false;
+    }
+};
 
 template <size_t NUM_LEDS>
 class Choreographer
@@ -25,7 +41,7 @@ class Choreographer
     std::vector<std::function<void(Choreographer*)>> effects;
 
 
-    Choreographer(BaseKaleido<NUM_LEDS>& kaleido) : kaleido(kaleido), currentEffect(new Hope(kaleido.dots))
+    Choreographer(BaseKaleido<NUM_LEDS>& kaleido) : kaleido(kaleido), currentEffect(new Hope(kaleido.lines))
     {
         effects.push_back(&Choreographer::sinesSlow);
         effects.push_back(&Choreographer::sinesFast);
@@ -33,9 +49,12 @@ class Choreographer
         effects.push_back(&Choreographer::outwards);
         effects.push_back(&Choreographer::outwardsDots);
         effects.push_back(&Choreographer::outwardsFacets);
+        effects.push_back(&Choreographer::outwardsAll);
         effects.push_back(&Choreographer::stars);
         effects.push_back(&Choreographer::hopeFacets);
         effects.push_back(&Choreographer::hopeLines);
+        effects.push_back(&Choreographer::running);
+        effects.push_back(&Choreographer::runningOpposite);
     }
 
     long effectStart = 0;
@@ -46,7 +65,7 @@ class Choreographer
         if (millis() - effectStart >= effectDuration)
         {
             effectStart = millis();
-            // nextEffect();
+            nextEffect();
         }
         currentEffect->paint();
     }
@@ -75,8 +94,8 @@ class Choreographer
         Sines *sinesFast = new Sines(kaleido.lines);
         sinesFast->minLength = 5.0f;
         sinesFast->maxLength = 15.0f;
-        sinesFast->minStepVelocity = 1.0f;
-        sinesFast->maxStepVelocity = 2.5f;
+        sinesFast->minStepVelocity = 5.0f;
+        sinesFast->maxStepVelocity = 10.0f;
         currentEffect = sinesFast;
     }
 
@@ -100,6 +119,11 @@ class Choreographer
         currentEffect = new Outwards(kaleido.dots_lines);
     }
 
+    void outwardsAll()
+    {
+        currentEffect = new OutwardsAll(kaleido.lines, kaleido.dots_lines, kaleido.facets);
+    }
+
     void stars()
     {
         currentEffect = new Stars(kaleido.dots);
@@ -113,6 +137,20 @@ class Choreographer
     void hopeLines()
     {
         currentEffect = new Hope(kaleido.lines);
+    }
+
+    void running()
+    {
+        Running* running = new Running(kaleido.lines);
+        running->opposite = false;
+        currentEffect = running;
+    }
+
+    void runningOpposite()
+    {
+        Running* running = new Running(kaleido.lines);
+        running->opposite = true;
+        currentEffect = running;
     }
 };
 

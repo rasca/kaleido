@@ -12,7 +12,7 @@ Framework<1886U> framework(kaleido);
 
 void setup() {
   Serial.begin(115200);
-  FastLED.setBrightness(20);
+  FastLED.setBrightness(64);
 
   framework.initialize();
   // framework.setupVirtualSegmentsLength(kaleido.dots_lines);

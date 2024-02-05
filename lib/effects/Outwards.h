@@ -80,11 +80,20 @@ public:
             // than the others
             // from: https://stats.stackexchange.com/questions/171592/generate-random-numbers-with-linear-distribution
             float u = ((float)rand()) / RAND_MAX;
+
+
             int segmentIndex = random(segments.getSegments().size());
 
-            float alpha = mapf(gyroData.pitch, (float)-M_PI/2, (float)M_PI/2, -4.0f/5.0f, 4.0f/5.0f);
-            float x = (sqrt(pow(alpha, 2) - 2*alpha + 4*alpha*u + 1) - 1) / alpha;
-            segmentIndex = map(x, -1.0f, 1.0f, 0, segments.getSegments().size() - 1);
+            // float alpha = mapf(gyroData.pitch, (float)-M_PI/2, (float)M_PI/2, -4.0f/5.0f, 4.0f/5.0f);
+            // float alpha = 4.0f/5.0f;
+            // if (alpha == 0)
+            // {
+            //     segmentIndex = random(segments.getSegments().size());
+            // } else {
+            //     float x = (sqrt(pow(alpha, 2) - 2*alpha + 4*alpha*u + 1) - 1) / alpha;
+            //     int segmentIndex = map(x, -1.0f, 1.0f, 0, segments.getSegments().size() - 1);
+            // }
+
             raysCreated[segmentIndex]++;
 
             CRGB color = CHSV(map(gyroData.yaw, (float)-M_PI, (float)M_PI, 0, 255), 255, 255);
@@ -102,6 +111,7 @@ public:
         size_t i;
         for (i = 0; i < rays.size(); i++) {
             bool ended = OutwardsPainter::paint(segmentsVector[get<0>(rays[i])], get<2>(rays[i]), get<1>(rays[i]), false, false);
+            // bool ended = false;
             if (ended)
             {
                 rays.erase(rays.begin() + i);
