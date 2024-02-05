@@ -25,12 +25,13 @@ class Choreographer
     std::vector<std::function<void(Choreographer*)>> effects;
 
 
-    Choreographer(BaseKaleido<NUM_LEDS>& kaleido) : kaleido(kaleido), currentEffect(new Sines(kaleido.lines))
+    Choreographer(BaseKaleido<NUM_LEDS>& kaleido) : kaleido(kaleido), currentEffect(new Hope(kaleido.dots))
     {
         effects.push_back(&Choreographer::sinesSlow);
         effects.push_back(&Choreographer::sinesFast);
         effects.push_back(&Choreographer::start);
         effects.push_back(&Choreographer::outwards);
+        effects.push_back(&Choreographer::outwardsDots);
         effects.push_back(&Choreographer::outwardsFacets);
         effects.push_back(&Choreographer::stars);
         effects.push_back(&Choreographer::hopeFacets);
@@ -42,11 +43,10 @@ class Choreographer
 
     void paint()
     {
-        Serial.println("painting");
         if (millis() - effectStart >= effectDuration)
         {
             effectStart = millis();
-            nextEffect();
+            // nextEffect();
         }
         currentEffect->paint();
     }
@@ -93,6 +93,11 @@ class Choreographer
     void outwardsFacets()
     {
         currentEffect = new Outwards(kaleido.facets);
+    }
+
+    void outwardsDots()
+    {
+        currentEffect = new Outwards(kaleido.dots_lines);
     }
 
     void stars()

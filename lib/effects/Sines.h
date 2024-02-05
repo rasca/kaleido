@@ -16,9 +16,6 @@ public:
     float maxStepVelocity = 2.5f;
 
     bool paint() override {
-        Serial.println("Sines::paint()");
-        Serial.print("gyroData.pitch: ");
-        Serial.println(gyroData.pitch);
         step += mapf(gyroData.pitch, (float)-M_PI/2, (float)M_PI/2, minStepVelocity, maxStepVelocity);
         int length = mapf(gyroData.roll, (float)-M_PI/2, (float)M_PI/2, minLength, maxLength);
         auto& segmentsVector = segments.getSegments();
