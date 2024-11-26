@@ -87,6 +87,7 @@ class Choreographer
         sinesSlow->minStepVelocity = 1.0f;
         sinesSlow->maxStepVelocity = 2.5f;
         currentEffect = sinesSlow;
+        effectDuration = random(15000, 40000);
     }
 
     void sinesFast()
@@ -97,46 +98,55 @@ class Choreographer
         sinesFast->minStepVelocity = 5.0f;
         sinesFast->maxStepVelocity = 10.0f;
         currentEffect = sinesFast;
+        effectDuration = random(15000, 40000);
     }
 
     void start()
     {
         currentEffect = new Start(kaleido.facets, kaleido.dots, kaleido.lines_all, kaleido.lines);
+        effectDuration = 90000;
     }
 
     void outwards()
     {
         currentEffect = new Outwards(kaleido.lines);
+        effectDuration = random(15000, 40000);
     }
 
     void outwardsFacets()
     {
         currentEffect = new Outwards(kaleido.facets);
+        effectDuration = random(5000, 10000);
     }
 
     void outwardsDots()
     {
         currentEffect = new Outwards(kaleido.dots_lines);
+        effectDuration = random(5000, 10000);
     }
 
     void outwardsAll()
     {
         currentEffect = new OutwardsAll(kaleido.lines, kaleido.dots_lines, kaleido.facets);
+        effectDuration = random(15000, 40000);
     }
 
     void stars()
     {
         currentEffect = new Stars(kaleido.dots);
+        effectDuration = random(5000, 15000);
     }
 
     void hopeFacets()
     {
         currentEffect = new Hope(kaleido.facets);
+        effectDuration = random(5000, 10000);
     }
 
     void hopeLines()
     {
         currentEffect = new Hope(kaleido.lines);
+        effectDuration = random(15000, 40000);
     }
 
     void running()
@@ -144,6 +154,7 @@ class Choreographer
         Running* running = new Running(kaleido.lines);
         running->opposite = false;
         currentEffect = running;
+        effectDuration = random(15000, 40000);
     }
 
     void runningOpposite()
@@ -151,6 +162,7 @@ class Choreographer
         Running* running = new Running(kaleido.lines);
         running->opposite = true;
         currentEffect = running;
+        effectDuration = random(15000, 40000);
     }
 };
 

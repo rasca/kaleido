@@ -33,9 +33,9 @@ public:
     {
     }
 
-    const long START_DOTS = 500;
-    const long START_LINES = 650;
-    const long ONLY_LINES = 1500;
+    const long START_DOTS = 200;
+    const long START_LINES = 450;
+    const long ONLY_LINES = 1000;
 
     bool paint() override
     {
