@@ -1,18 +1,14 @@
 #define FASTLED_INTERNAL  // remove FastLED build warning
 #include <Arduino.h>
 #include <Framework.h>
-#include <Kaleido.h>
-#include <Wand.h>
+#include <Iratorio.h>
 
-BigKaleido kaleido;
-Framework<1886U> framework(kaleido);
-
-// Wand wand;
-// Framework<0U> framework(wand);
+Iratorio<1886U> iratorio;
+Framework<1886U> framework(iratorio);
 
 void setup() {
   Serial.begin(115200);
-  FastLED.setBrightness(40);
+  FastLED.setBrightness(50);
 
   framework.initialize();
   // framework.setupVirtualSegmentsLength(kaleido.dots_lines);
