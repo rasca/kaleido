@@ -10,6 +10,18 @@
 #include "Gyro.h"
 #include "Utils.h"
 
+// Add this struct definition
+struct __attribute__((packed)) MessageHeader {
+    char functionName[16];  // Fixed size for function name
+    uint16_t dataSize;      // Size of the following data
+};
+
+// Add this struct to combine header and data
+struct __attribute__((packed)) WandMessage {
+    MessageHeader header;
+    GyroData data;
+};
+
 const int16_t TICK_MOVEMENT_THRESHOLD = 80;
 const unsigned long STILL_TIME_TO_SLEEP_NO_MOVEMENT_MS = 1000;
 const unsigned long STILL_TIME_TO_SLEEP_MOVEMENT_MS = 60000;
@@ -20,7 +32,7 @@ class Wand : public Project<0>
 {
 
 public:
-    EspNow<GyroData> espNow;
+    EspNow<WandMessage> espNow;
     int16_t lastAccelX, lastAccelY, lastAccelZ;
     Gyro gyro;
     unsigned long lastMovementTime;
@@ -32,6 +44,11 @@ public:
         espNow.setup(OnDataRecv, OnDataSent);
         espNow.setupBroadcast();
         gyro.initialize();
+        
+        // Initialize the message header
+        strncpy(espNow.data.header.functionName, "wandData", sizeof(espNow.data.header.functionName));
+        espNow.data.header.dataSize = sizeof(GyroData);
+        
         lastMovementTime = millis();
         ticks = 0;
         hasBeenMoved = false;
@@ -49,7 +66,8 @@ public:
         gyro.tick();
         // gyro.print();
 
-        espNow.data = gyroData;
+        // Update just the data portion
+        espNow.data.data = gyroData;
 
         // Angular distance:
         // Quaternion qr0(1, 0, 0, 0);
