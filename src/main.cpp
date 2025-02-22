@@ -2,9 +2,13 @@
 #include <Arduino.h>
 #include <Framework.h>
 #include <Iratorio.h>
+#include <Ovni.h>
 
-Iratorio<1886U> iratorio;
-Framework<1886U> framework(iratorio);
+// Iratorio<1886U> iratorio;
+// Framework<1886U> framework(iratorio);
+
+Ovni<1886U> ovni;
+Framework<1886U> framework(ovni);
 
 void setup() {
   Serial.begin(115200);
