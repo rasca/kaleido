@@ -3,6 +3,7 @@
 
 #include <esp_now.h>
 #include <WiFi.h>
+#include <esp_wifi.h>
 
 
 uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -11,15 +12,19 @@ template<typename T>
 class EspNow {
 
 esp_now_peer_info_t peerInfo;
+uint8_t channel = 7;  // default channel
 
 public:
-// TODO: add channel
     T data;
 
-    void setup(esp_now_recv_cb_t OnDataRecv, esp_now_send_cb_t OnDataSent)
+    void setup(esp_now_recv_cb_t OnDataRecv, esp_now_send_cb_t OnDataSent, uint8_t wifi_channel = 7)
     {
         // Set device as a Wi-Fi Station
         WiFi.mode(WIFI_STA);
+
+        // Set WiFi channel
+        channel = wifi_channel;
+        esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 
         // Init ESP-NOW
         if (esp_now_init() != ESP_OK)
@@ -40,7 +45,7 @@ public:
     {
         // Register peer
         memcpy(peerInfo.peer_addr, peer, 6);
-        peerInfo.channel = 0;
+        peerInfo.channel = channel;  // Use the same channel as WiFi
         peerInfo.encrypt = false;
 
         // Add peer
