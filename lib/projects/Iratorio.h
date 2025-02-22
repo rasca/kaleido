@@ -37,11 +37,10 @@ public:
     float currentDb = 0;                    // Current dB level
     float peakDb = 0;                       // Peak dB level
     bool isScreaming = false;               // Whether currently screaming
-    const float SCREAM_THRESHOLD_DB = 85.0; // Minimum dB to count as screaming
+    const float SCREAM_PEAK_RATIO = 0.85;    // Ratio of peak dB to trigger screaming
     const float MAX_DB = 100.0;             // Maximum dB to measure (for safety)
 
     // Ambient effect variables
-    const float AMBIENT_SCREAM_THRESHOLD = 0.6;    // 60% of peak dB
     const unsigned long AMBIENT_WINDOW = 2000;     // 2 second window for scream detection
     const unsigned long AMBIENT_MIN_TIME = 200;    // Minimum 200ms of screaming needed
     const unsigned long AMBIENT_ON_TIME = 60000;   // 1 minute on time
@@ -49,14 +48,14 @@ public:
     const unsigned long LED_FADE_DURATION = 1000;  // Duration for individual LED fade transitions
 
     // Ambient effect state
-    unsigned long ambientScreamTime = 0;  // Total scream time in current window
-    unsigned long lastScreamTime = 0;     // Last time a scream was detected
-    unsigned long ambientStartTime = 0;   // When the ambient effect started
-    bool ambientActive = false;           // Whether ambient effect is active
-    std::vector<unsigned long> ledTimers; // Individual LED timers for ambient effect
-    std::vector<uint8_t> ledBrightness;   // Individual LED brightness values
+    unsigned long ambientScreamTime = 0;                // Total scream time in current window
+    unsigned long lastScreamTime = 0;                   // Last time a scream was detected
+    unsigned long ambientStartTime = 0;                 // When the ambient effect started
+    bool ambientActive = false;                         // Whether ambient effect is active
+    std::vector<unsigned long> ledTimers;               // Individual LED timers for ambient effect
+    std::vector<uint8_t> ledBrightness;                 // Individual LED brightness values
     std::vector<unsigned long> ledTransitionStartTimes; // When each LED started its transition
-    std::vector<bool> ledTransitioningUp; // Whether each LED is transitioning up or down
+    std::vector<bool> ledTransitioningUp;               // Whether each LED is transitioning up or down
 
     // Calibration variables
     const int CALIBRATION_TIME = 2000;    // 2 seconds of calibration
@@ -212,7 +211,7 @@ public:
             }
 
             // Update scream state
-            if (currentDb > SCREAM_THRESHOLD_DB)
+            if (currentDb > peakDb * SCREAM_PEAK_RATIO)
             {
                 isScreaming = true;
                 if (currentDb > peakDb)
@@ -341,31 +340,40 @@ public:
         unsigned long currentTime = millis();
 
         // Check if we're in a scream that should trigger ambient
-        if (currentDb > SCREAM_THRESHOLD_DB * AMBIENT_SCREAM_THRESHOLD)
+        if (currentDb > peakDb * SCREAM_PEAK_RATIO)
         {
+            Serial.println("Scream detected");
             if (currentTime - lastScreamTime <= AMBIENT_WINDOW)
             {
+                Serial.println("Scream within window");
                 ambientScreamTime += currentTime - lastScreamTime;
             }
             else
             {
+                Serial.println("Scream outside window");
                 ambientScreamTime = 0;
             }
             lastScreamTime = currentTime;
 
             // If we've accumulated enough scream time, activate ambient
-            if (ambientScreamTime >= AMBIENT_MIN_TIME && !ambientActive)
+            if (ambientScreamTime >= AMBIENT_MIN_TIME)
             {
+                Serial.println("Scream time enough");
+                if (!ambientActive)
+                {
+                    Serial.println("Initializing ambient");
+                    // Initialize random timers and transitions for each LED
+                    for (size_t i = 0; i < ledTimers.size(); i++)
+                    {
+                        ledTimers[i] = currentTime + random(0, 2000); // Random start times within 2 seconds
+                        ledBrightness[i] = 0;
+                        ledTransitionStartTimes[i] = currentTime;
+                        ledTransitioningUp[i] = true;
+                    }
+                }
                 ambientActive = true;
                 ambientStartTime = currentTime;
-                // Initialize random timers and transitions for each LED
-                for (size_t i = 0; i < ledTimers.size(); i++)
-                {
-                    ledTimers[i] = currentTime + random(0, 2000); // Random start times within 2 seconds
-                    ledBrightness[i] = 0;
-                    ledTransitionStartTimes[i] = currentTime;
-                    ledTransitioningUp[i] = true;
-                }
+                ambientScreamTime = 0;
             }
         }
 
@@ -459,15 +467,19 @@ public:
         {
             unsigned long currentTime = millis();
             String remainingTime = "";
-            if (ambientActive) {
+            if (ambientActive)
+            {
                 unsigned long effectDuration = currentTime - ambientStartTime;
-                if (effectDuration <= AMBIENT_ON_TIME) {
-                    remainingTime = String((AMBIENT_ON_TIME + AMBIENT_FADE_TIME - effectDuration) / 1000) + "s";
-                } else if (effectDuration <= AMBIENT_ON_TIME + AMBIENT_FADE_TIME) {
-                    remainingTime = String((AMBIENT_ON_TIME + AMBIENT_FADE_TIME - effectDuration) / 1000) + "s (fading)";
+                if (effectDuration <= AMBIENT_ON_TIME)
+                {
+                    remainingTime = String((AMBIENT_ON_TIME + AMBIENT_FADE_TIME - effectDuration) / 1000) + "s (full)";
+                }
+                else if (effectDuration <= AMBIENT_ON_TIME + AMBIENT_FADE_TIME)
+                {
+                    remainingTime = String((AMBIENT_ON_TIME + AMBIENT_FADE_TIME - effectDuration) / 1000) + "s (dimming)";
                 }
             }
-            
+
             Serial.print("dB: ");
             Serial.print(currentDb, 1); // Show one decimal place
             Serial.print("\tPeak dB: ");
@@ -478,7 +490,8 @@ public:
             Serial.print(isScreaming);
             Serial.print("\tAmbient: ");
             Serial.print(ambientActive);
-            if (ambientActive) {
+            if (ambientActive)
+            {
                 Serial.print(" (");
                 Serial.print(remainingTime);
                 Serial.print(")");
