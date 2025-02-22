@@ -9,6 +9,21 @@
 #include "PhysicalSegments.h"
 #include "VirtualSegments.h"
 #include "Utils.h"
+#include "EspNow.h"
+
+// Add this struct definition
+struct __attribute__((packed)) MessageHeader
+{
+    char functionName[16]; // Fixed size for function name
+    uint16_t dataSize;     // Size of the following data
+};
+
+// Add this struct to combine header and data
+struct __attribute__((packed)) IratorioMessage
+{
+    MessageHeader header;
+    float level;
+};
 
 template <size_t NUM_LEDS>
 class Iratorio : public Project<NUM_LEDS>
@@ -18,12 +33,16 @@ public:
     VirtualSegments<NUM_LEDS> vu_meter;
     VirtualSegments<NUM_LEDS> ambient;
 
+    EspNow<IratorioMessage> espNow;
+
+    const bool DEBUG = false;
+
     // Mode selection
     const bool SCREAM_MODE = true; // Set to true for scream contest, false for VU meter
 
     // Audio processing variables
     const int SAMPLE_WINDOW = 50;            // Sample window in ms
-    const int MIC_PIN = 15;                  // Analog pin for microphone
+    const int MIC_PIN = 33;                  // Analog pin for microphone
     float peakToPeak = 0;                    // Peak-to-peak level
     float level = 0;                         // Normalized level (0-1)
     float autoGain = 1.0;                    // Auto gain multiplier
@@ -32,13 +51,14 @@ public:
     const int VU_METER_LENGTH = 60 * 5 - 31; // 5m x 60led/m strip minus 20 leds cut
 
     // Scream contest variables
-    const float REF_VOLTAGE = 3.3;          // Reference voltage for ADC
-    const float VREF_DB = 0.00631;          // Reference voltage for 94dB SPL calibration
-    float currentDb = 0;                    // Current dB level
-    float peakDb = 0;                       // Peak dB level
-    bool isScreaming = false;               // Whether currently screaming
-    const float SCREAM_PEAK_RATIO = 0.85;    // Ratio of peak dB to trigger screaming
-    const float MAX_DB = 100.0;             // Maximum dB to measure (for safety)
+    const float REF_VOLTAGE = 3.3;            // Reference voltage for ADC
+    const float VREF_DB = 0.00631;            // Reference voltage for 94dB SPL calibration
+    float currentDb = 0;                      // Current dB level
+    float peakDb = 0;                         // Peak dB level
+    bool isScreaming = false;                 // Whether currently screaming
+    const float SCREAM_PEAK_RATIO = 0.85;     // Ratio of peak dB to trigger screaming
+    const float MAX_SCREAM_PEAK_RATIO = 0.92; // Ratio of peak dB to trigger MAN screaming
+    const float MAX_DB = 100.0;               // Maximum dB to measure (for safety)
 
     // Ambient effect variables
     const unsigned long AMBIENT_WINDOW = 2000;     // 2 second window for scream detection
@@ -62,6 +82,8 @@ public:
     float ambientDb = 0;                  // Calibrated ambient noise level
     bool isCalibrated = false;            // Whether calibration is complete
     const float CALIBRATION_SAMPLES = 20; // Number of samples to average
+
+    bool needToSendZero = false; // Track if we need to send zero after high level
 
     Iratorio() : Project<NUM_LEDS>(),
                  vu_meter(this->physicalSegments.leds),
@@ -90,12 +112,25 @@ public:
 
     void initialize(Framework<NUM_LEDS> &framework)
     {
+        espNow.setup(OnDataRecv, OnDataSent);
+        espNow.setupBroadcast();
+
+        // Initialize the message header
+        strncpy(espNow.data.header.functionName, "iratorioData", sizeof(espNow.data.header.functionName));
+        espNow.data.header.dataSize = sizeof(float);
+
         FastLED.clear();
         analogReadResolution(12); // Set analog read resolution to 12 bits for better precision
 
         // Run calibration
         calibrate();
     }
+    static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+    {
+        // Serial.print("\r\nLast Packet Send Status:\t");
+        // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    }
+    static void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {}
 
     void calibrate()
     {
@@ -342,15 +377,12 @@ public:
         // Check if we're in a scream that should trigger ambient
         if (currentDb > peakDb * SCREAM_PEAK_RATIO)
         {
-            Serial.println("Scream detected");
             if (currentTime - lastScreamTime <= AMBIENT_WINDOW)
             {
-                Serial.println("Scream within window");
                 ambientScreamTime += currentTime - lastScreamTime;
             }
             else
             {
-                Serial.println("Scream outside window");
                 ambientScreamTime = 0;
             }
             lastScreamTime = currentTime;
@@ -358,10 +390,8 @@ public:
             // If we've accumulated enough scream time, activate ambient
             if (ambientScreamTime >= AMBIENT_MIN_TIME)
             {
-                Serial.println("Scream time enough");
                 if (!ambientActive)
                 {
-                    Serial.println("Initializing ambient");
                     // Initialize random timers and transitions for each LED
                     for (size_t i = 0; i < ledTimers.size(); i++)
                     {
@@ -443,9 +473,25 @@ public:
 
                 // Apply master brightness and set LED color
                 float finalBrightness = (targetBrightness / 255.0f) * masterBrightness;
-                leds[i] = CRGB::Red;
+                leds[i] = CRGB(50, 0, 0); // Red = 50
                 leds[i].nscale8(uint8_t(finalBrightness * 255));
             }
+        }
+    }
+
+    void sendData()
+    {
+        if (currentDb > MAX_SCREAM_PEAK_RATIO * peakDb)
+        {
+            espNow.data.level = currentDb;
+            espNow.send();
+            needToSendZero = true;
+        }
+        else if (needToSendZero)
+        {
+            espNow.data.level = 0;
+            espNow.send();
+            needToSendZero = false;
         }
     }
 
@@ -458,52 +504,56 @@ public:
             lastPaint = millis();
             updateDisplay();
             updateAmbientEffect();
+            sendData();
 
             FastLED.show();
         }
 
         // Debug output
-        if (SCREAM_MODE)
+        if (DEBUG)
         {
-            unsigned long currentTime = millis();
-            String remainingTime = "";
-            if (ambientActive)
+            if (SCREAM_MODE && false)
             {
-                unsigned long effectDuration = currentTime - ambientStartTime;
-                if (effectDuration <= AMBIENT_ON_TIME)
+                unsigned long currentTime = millis();
+                String remainingTime = "";
+                if (ambientActive)
                 {
-                    remainingTime = String((AMBIENT_ON_TIME + AMBIENT_FADE_TIME - effectDuration) / 1000) + "s (full)";
+                    unsigned long effectDuration = currentTime - ambientStartTime;
+                    if (effectDuration <= AMBIENT_ON_TIME)
+                    {
+                        remainingTime = String((AMBIENT_ON_TIME + AMBIENT_FADE_TIME - effectDuration) / 1000) + "s (full)";
+                    }
+                    else if (effectDuration <= AMBIENT_ON_TIME + AMBIENT_FADE_TIME)
+                    {
+                        remainingTime = String((AMBIENT_ON_TIME + AMBIENT_FADE_TIME - effectDuration) / 1000) + "s (dimming)";
+                    }
                 }
-                else if (effectDuration <= AMBIENT_ON_TIME + AMBIENT_FADE_TIME)
-                {
-                    remainingTime = String((AMBIENT_ON_TIME + AMBIENT_FADE_TIME - effectDuration) / 1000) + "s (dimming)";
-                }
-            }
 
-            Serial.print("dB: ");
-            Serial.print(currentDb, 1); // Show one decimal place
-            Serial.print("\tPeak dB: ");
-            Serial.print(peakDb, 1);
-            Serial.print("\tLevel: ");
-            Serial.print(level, 3);
-            Serial.print("\tScreaming: ");
-            Serial.print(isScreaming);
-            Serial.print("\tAmbient: ");
-            Serial.print(ambientActive);
-            if (ambientActive)
-            {
-                Serial.print(" (");
-                Serial.print(remainingTime);
-                Serial.print(")");
+                Serial.print("dB: ");
+                Serial.print(currentDb, 1); // Show one decimal place
+                Serial.print("\tPeak dB: ");
+                Serial.print(peakDb, 1);
+                Serial.print("\tLevel: ");
+                Serial.print(level, 3);
+                Serial.print("\tScreaming: ");
+                Serial.print(isScreaming);
+                Serial.print("\tAmbient: ");
+                Serial.print(ambientActive);
+                if (ambientActive)
+                {
+                    Serial.print(" (");
+                    Serial.print(remainingTime);
+                    Serial.print(")");
+                }
+                Serial.println();
             }
-            Serial.println();
-        }
-        else
-        {
-            Serial.print("Level: ");
-            Serial.print(level, 3);
-            Serial.print("\tPeak-to-Peak: ");
-            Serial.println(peakToPeak);
+            else
+            {
+                Serial.print("Level: ");
+                Serial.print(level, 3);
+                Serial.print("\tPeak-to-Peak: ");
+                Serial.println(peakToPeak);
+            }
         }
     }
 

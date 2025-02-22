@@ -8,7 +8,7 @@ Framework<1886U> framework(iratorio);
 
 void setup() {
   Serial.begin(115200);
-  FastLED.setBrightness(50);
+  FastLED.setBrightness(150);
 
   framework.initialize();
   // framework.setupVirtualSegmentsLength(kaleido.dots_lines);
