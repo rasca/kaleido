@@ -27,8 +27,8 @@ public:
     uint8_t send_value = 0;
 
     // Timer constants
-    const int ON_TIME = 1000;        // Time in seconds to stay on after movement
-    const int LASER_TIME = 1000;      // Time in seconds for laser to stay on
+    const int ON_TIME = 1000;     // Time in seconds to stay on after movement
+    const int LASER_TIME = 1000;  // Time in seconds for laser to stay on
     const int LASER_COOLDOWN = 2; // Time in seconds before laser can trigger again
     unsigned long timer_start = 0;
     unsigned long laser_start = 0;
@@ -41,14 +41,14 @@ public:
              lower(this->physicalSegments.leds)
     {
         // lower circle 5m x 28 pixel (84 leds, 3 per IC) x meter
-        auto lower_pixels = 5 * 28;
+        auto lower_pixels = 5 * 14;
         auto segment = this->physicalSegments.addSegment(0, lower_pixels);
-        FastLED.addLeds<WS2811, 26, GRB>(&(segment.getLEDs()[0]), segment.getSize());
+        FastLED.addLeds<WS2811, 26, BRG>(&(segment.getLEDs()[0]), segment.getSize());
 
         // upper circle 5m x 28 pixel (84 leds, 3 per IC) x meter + 2m x 18 pixel (108 leds, 6 per IC) x meter
-        auto upper_pixels = 5 * 28 + 2 * 18;
+        auto upper_pixels = 5 * 14 + 2 * 18;
         segment = this->physicalSegments.addSegment(lower_pixels, upper_pixels);
-        FastLED.addLeds<WS2811, 25, GRB>(&(segment.getLEDs()[0]), segment.getSize());
+        FastLED.addLeds<WS2811, 25, BRG>(&(segment.getLEDs()[0]), segment.getSize());
 
         lower.addSegment(0, lower_pixels);            // all the dots
         upper.addSegment(lower_pixels, upper_pixels); // all the dots
@@ -84,21 +84,6 @@ public:
         Serial.println("Turning ON");
         digitalWrite(2, HIGH);
         laserOn();
-
-        auto upper_segment = upper.getSegments()[0];
-        auto upper_leds = upper_segment.getLEDs();
-        auto lower_segment = lower.getSegments()[0];
-        auto lower_leds = lower_segment.getLEDs();
-
-        for (int i = 0; i < upper_segment.getSize(); ++i)
-        {
-            upper_leds[i] = CRGB::Red;
-        }
-        for (int i = 0; i < lower_segment.getSize(); ++i)
-        {
-            lower_leds[i] = CRGB::Red;
-        }
-        FastLED.show();
     }
 
     void toOff()
@@ -106,21 +91,6 @@ public:
         Serial.println("Turning OFF");
         digitalWrite(2, LOW);
         dmxOff();
-
-        auto upper_segment = upper.getSegments()[0];
-        auto upper_leds = upper_segment.getLEDs();
-        auto lower_segment = lower.getSegments()[0];
-        auto lower_leds = lower_segment.getLEDs();
-
-        for (int i = 0; i < upper_segment.getSize(); ++i)
-        {
-            upper_leds[i] = CRGB::Black;
-        }
-        for (int i = 0; i < lower_segment.getSize(); ++i)
-        {
-            lower_leds[i] = CRGB::Black;
-        }
-        FastLED.show();
     }
 
     void dmxOn()
@@ -178,6 +148,52 @@ public:
             is_on = false;
             toOff();
         }
+
+        auto upper_segment = upper.getSegments()[0];
+        auto upper_leds = upper_segment.getLEDs();
+        auto lower_segment = lower.getSegments()[0];
+        auto lower_leds = lower_segment.getLEDs();
+        if (is_on)
+        {
+            for (int i = 0; i < upper_segment.getSize(); ++i)
+            {
+                upper_leds[i] = CRGB::Red;
+            }
+            for (int i = 0; i < lower_segment.getSize(); ++i)
+            {
+                lower_leds[i] = CRGB::Red;
+            }
+        }
+        else
+        {
+
+            for (int i = 0; i < upper_segment.getSize(); ++i)
+            {
+                upper_leds[i] = CRGB::Black;
+            }
+            for (int i = 0; i < lower_segment.getSize(); ++i)
+            {
+                lower_leds[i] = CRGB::Black;
+            }
+        }
+
+        upper_leds[upper_segment.getSize() - 1] = CRGB::Green;
+        lower_leds[lower_segment.getSize() - 1] = CRGB::Green;
+
+        // Swap red and green colors from 5 * 14 to the end
+        int start_idx = 5 * 14;
+        for (int i = start_idx; i < upper_segment.getSize(); ++i)
+        {
+            uint8_t temp = upper_leds[i].r;
+            upper_leds[i].r = upper_leds[i].b;
+            upper_leds[i].b = temp;
+
+            temp = upper_leds[i].r;
+            upper_leds[i].r = upper_leds[i].g;
+            upper_leds[i].g = temp;
+        }
+
+        FastLED.show();
     }
 };
 
