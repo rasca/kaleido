@@ -1,7 +1,6 @@
 #define FASTLED_INTERNAL  // remove FastLED build warning
 #include <Arduino.h>
 #include <Framework.h>
-#include <Iratorio.h>
 #include <Ovni.h>
 
 // Iratorio<1886U> iratorio;

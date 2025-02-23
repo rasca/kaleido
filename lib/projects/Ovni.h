@@ -9,108 +9,127 @@
 #include "PhysicalSegments.h"
 #include "VirtualSegments.h"
 #include "Utils.h"
-// Add DMX library
-#include <esp_dmx.h>
+#include <dmx.h>
 
-template<size_t NUM_LEDS>
-class Ovni : public Project<NUM_LEDS> {
+template <size_t NUM_LEDS>
+class Ovni : public Project<NUM_LEDS>
+{
 
 public:
+    VirtualSegments<NUM_LEDS> upper;
+    VirtualSegments<NUM_LEDS> lower;
 
-    VirtualSegments<NUM_LEDS> vu_meter;
-    VirtualSegments<NUM_LEDS> ambient;
-
-    const dmx_port_t dmx_num = DMX_NUM_1;
-    const dmx_config_t config = DMX_CONFIG_DEFAULT;
-
-    const int personality_count = 1;
-
-    dmx_personality_t personalities[1] = {
-        {1, "Ovni"}
-    };
-
-    // Movement Sensor
+    // PIR motion sensor input
     const int movement_sensor_pin = 21;
 
-    // DMX
-    const int tx_pin = 17;
-    const int rx_pin = 16;
-    const int rts_pin = 21;
+    // dmx
+    int readcycle = 0;
+    uint8_t send_value = 0;
 
-    uint8_t data[DMX_PACKET_SIZE] = {0, 0, 0};
-
-    
     Ovni() : Project<NUM_LEDS>(),
-                 vu_meter(this->physicalSegments.leds),
-                 ambient(this->physicalSegments.leds)
+             upper(this->physicalSegments.leds),
+             lower(this->physicalSegments.leds)
     {
-        // // Constructor initializes FillEffect with lines_all and CRGB::Red
-        auto segment = this->physicalSegments.addSegment(0, 5 * 60);  // dots 6 x 50led strings
-        // FastLED.addLeds<WS2812, 26>(&(segment.getLEDs()[0]), segment.getSize());
+        // lower circle 5m x 28 pixel (84 leds, 3 per IC) x meter
+        auto lower_pixels = 5 * 28;
+        auto segment = this->physicalSegments.addSegment(0, lower_pixels);
+        FastLED.addLeds<WS2811, 26, GRB>(&(segment.getLEDs()[0]), segment.getSize());
 
-        // facets
-        segment = this->physicalSegments.addSegment(0, 5 * 60);  // 1 x 50led string
-        FastLED.addLeds<WS2812, 14, GRB>(&(segment.getLEDs()[0]), segment.getSize());
+        // upper circle 5m x 28 pixel (84 leds, 3 per IC) x meter + 2m x 18 pixel (108 leds, 6 per IC) x meter
+        auto upper_pixels = 5 * 28 + 2 * 18;
+        segment = this->physicalSegments.addSegment(lower_pixels, upper_pixels);
+        FastLED.addLeds<WS2811, 25, GRB>(&(segment.getLEDs()[0]), segment.getSize());
 
-        vu_meter.addSegment(0, 5 * 60); // all the dots
-        // ambient.addSegment(300, 1 * 50); // all the facets
+        lower.addSegment(0, lower_pixels);            // all the dots
+        upper.addSegment(lower_pixels, upper_pixels); // all the dots
     }
 
-    void initialize(Framework<NUM_LEDS>& framework) {
+    void initialize(Framework<NUM_LEDS> &framework)
+    {
         FastLED.clear();
 
-        // DMX setup
-        dmx_driver_install(dmx_num, &config, personalities, personality_count);
-        dmx_set_pin(dmx_num, tx_pin, tx_pin, rts_pin);
+        pinMode(movement_sensor_pin, INPUT); // PIR motion sensor is determined is an input here.
+        pinMode(2, OUTPUT);
 
-        pinMode(movement_sensor_pin, INPUT); // PIR motion sensor is determined is an input here.  
-        pinMode(2,OUTPUT);
-
+        DMX::Initialize(output);
     }
 
     long long lastPaint = 0;
-    int paintInterval = 2000; // millis
-    bool on = false;
+    int paintInterval = 40; // millis
+    bool movementDetected = false;
 
+    void tick() override
+    {
 
-    void tick() override {
-
-        if (millis() - lastPaint > paintInterval) {
+        if (digitalRead(movement_sensor_pin) == HIGH)
+        {
+            movementDetected = true;
+        }
+        if (millis() - lastPaint > paintInterval)
+        {
             lastPaint = millis();
-
-            if (on) {
-                Serial.println("ON");
-                data[0] = 20;
-                data[1] = 70;
-                data[2] = 0;
-                data[3] = 0;
-                data[4] = 0;
-                data[5] = 0;
-                data[6] = 0;
-                on = false;
-            } else {
-                Serial.println("OFF");
-                data[0] = 0;
-                on = true;
-            }
-
-            if (digitalRead(movement_sensor_pin) == HIGH) {
-                Serial.println("Movement detected");
-                digitalWrite(2, HIGH);
-            } else {
-                Serial.println("No movement detected");
-                digitalWrite(2, LOW);
-            }
-            dmx_write(dmx_num, data, DMX_PACKET_SIZE);
-            dmx_send(dmx_num);
 
             // Clear previous frame
             FastLED.clear();
 
+            auto upper_segment = upper.getSegments()[0];
+            auto upper_leds = upper_segment.getLEDs();
+
+            auto lower_segment = lower.getSegments()[0];
+            auto lower_leds = lower_segment.getLEDs();
+
+            if (movementDetected)
+            {
+                Serial.println("Movement detected");
+                digitalWrite(2, HIGH);
+
+                DMX::Write(1, 125);
+                DMX::Write(2, 125);
+                DMX::Write(3, 125);
+                DMX::Write(4, 125);
+                DMX::Write(5, 125);
+                DMX::Write(6, 125);
+                DMX::Write(7, 125);
+                DMX::Write(8, 125);
+
+                for (int i = 0; i < upper_segment.getSize(); ++i)
+                {
+                    upper_leds[i] = CRGB::Red; // Set each LED to white
+                }
+
+                for (int i = 0; i < lower_segment.getSize(); ++i)
+                {
+                    lower_leds[i] = CRGB::Red; // Set each LED to white
+                }
+            }
+            else
+            {
+                Serial.println("No movement detected");
+                digitalWrite(2, LOW);
+
+                DMX::Write(1, 0);
+                DMX::Write(2, 0);
+                DMX::Write(3, 0);
+                DMX::Write(4, 0);
+                DMX::Write(5, 0);
+                DMX::Write(6, 0);
+                DMX::Write(7, 0);
+                DMX::Write(8, 0);
+                for (int i = 0; i < upper_segment.getSize(); ++i)
+                {
+                    upper_leds[i] = CRGB::Black; // Set each LED to white
+                }
+
+                for (int i = 0; i < lower_segment.getSize(); ++i)
+                {
+                    lower_leds[i] = CRGB::Black; // Set each LED to white
+                }
+            }
+
             FastLED.show();
+            movementDetected = false;
         }
     }
-
 };
 
 #endif // OVNI_H
