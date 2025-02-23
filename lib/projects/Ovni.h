@@ -27,8 +27,8 @@ public:
     uint8_t send_value = 0;
 
     // Timer constants
-    const int ON_TIME = 10;        // Time in seconds to stay on after movement
-    const int LASER_TIME = 2;      // Time in seconds for laser to stay on
+    const int ON_TIME = 1000;        // Time in seconds to stay on after movement
+    const int LASER_TIME = 1000;      // Time in seconds for laser to stay on
     const int LASER_COOLDOWN = 2; // Time in seconds before laser can trigger again
     unsigned long timer_start = 0;
     unsigned long laser_start = 0;
@@ -67,6 +67,7 @@ public:
         Serial.println("Laser ON");
         dmxOn();
         laser_is_on = true;
+        last_laser_end = millis();
         laser_start = millis();
     }
 
@@ -125,12 +126,12 @@ public:
     void dmxOn()
     {
         DMX::Write(1, 125);
-        DMX::Write(2, 125);
-        DMX::Write(3, 125);
-        DMX::Write(4, 125);
-        DMX::Write(5, 125);
-        DMX::Write(6, 125);
-        DMX::Write(7, 125);
+        DMX::Write(2, 90);
+        DMX::Write(3, 60);
+        DMX::Write(4, 10);
+        DMX::Write(5, 20);
+        DMX::Write(6, 91); // 91, 141
+        DMX::Write(7, 235);
     }
 
     void dmxOff()
