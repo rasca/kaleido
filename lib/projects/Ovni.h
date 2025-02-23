@@ -26,6 +26,16 @@ public:
     int readcycle = 0;
     uint8_t send_value = 0;
 
+    // Timer constants
+    const int ON_TIME = 10;        // Time in seconds to stay on after movement
+    const int LASER_TIME = 2;      // Time in seconds for laser to stay on
+    const int LASER_COOLDOWN = 2; // Time in seconds before laser can trigger again
+    unsigned long timer_start = 0;
+    unsigned long laser_start = 0;
+    unsigned long last_laser_end = 0;
+    bool is_on = false;
+    bool laser_is_on = false;
+
     Ovni() : Project<NUM_LEDS>(),
              upper(this->physicalSegments.leds),
              lower(this->physicalSegments.leds)
@@ -47,87 +57,125 @@ public:
     void initialize(Framework<NUM_LEDS> &framework)
     {
         FastLED.clear();
-
-        pinMode(movement_sensor_pin, INPUT); // PIR motion sensor is determined is an input here.
+        pinMode(movement_sensor_pin, INPUT);
         pinMode(2, OUTPUT);
-
         DMX::Initialize(DMXDirection::output);
     }
 
-    long long lastPaint = 0;
-    int paintInterval = 40; // millis
-    bool movementDetected = false;
+    void laserOn()
+    {
+        Serial.println("Laser ON");
+        dmxOn();
+        laser_is_on = true;
+        laser_start = millis();
+    }
+
+    void laserOff()
+    {
+        Serial.println("Laser OFF");
+        dmxOff();
+        laser_is_on = false;
+        last_laser_end = millis();
+    }
+
+    void toOn()
+    {
+        Serial.println("Turning ON");
+        digitalWrite(2, HIGH);
+        laserOn();
+
+        auto upper_segment = upper.getSegments()[0];
+        auto upper_leds = upper_segment.getLEDs();
+        auto lower_segment = lower.getSegments()[0];
+        auto lower_leds = lower_segment.getLEDs();
+
+        for (int i = 0; i < upper_segment.getSize(); ++i)
+        {
+            upper_leds[i] = CRGB::Red;
+        }
+        for (int i = 0; i < lower_segment.getSize(); ++i)
+        {
+            lower_leds[i] = CRGB::Red;
+        }
+        FastLED.show();
+    }
+
+    void toOff()
+    {
+        Serial.println("Turning OFF");
+        digitalWrite(2, LOW);
+        dmxOff();
+
+        auto upper_segment = upper.getSegments()[0];
+        auto upper_leds = upper_segment.getLEDs();
+        auto lower_segment = lower.getSegments()[0];
+        auto lower_leds = lower_segment.getLEDs();
+
+        for (int i = 0; i < upper_segment.getSize(); ++i)
+        {
+            upper_leds[i] = CRGB::Black;
+        }
+        for (int i = 0; i < lower_segment.getSize(); ++i)
+        {
+            lower_leds[i] = CRGB::Black;
+        }
+        FastLED.show();
+    }
+
+    void dmxOn()
+    {
+        DMX::Write(1, 125);
+        DMX::Write(2, 125);
+        DMX::Write(3, 125);
+        DMX::Write(4, 125);
+        DMX::Write(5, 125);
+        DMX::Write(6, 125);
+        DMX::Write(7, 125);
+    }
+
+    void dmxOff()
+    {
+        DMX::Write(1, 0);
+        DMX::Write(2, 0);
+        DMX::Write(3, 0);
+        DMX::Write(4, 0);
+        DMX::Write(5, 0);
+        DMX::Write(6, 0);
+        DMX::Write(7, 0);
+    }
 
     void tick() override
     {
-
         if (digitalRead(movement_sensor_pin) == HIGH)
         {
-            movementDetected = true;
-        }
-        if (millis() - lastPaint > paintInterval)
-        {
-            lastPaint = millis();
-
-            // Clear previous frame
-            FastLED.clear();
-
-            auto upper_segment = upper.getSegments()[0];
-            auto upper_leds = upper_segment.getLEDs();
-
-            auto lower_segment = lower.getSegments()[0];
-            auto lower_leds = lower_segment.getLEDs();
-
-            if (movementDetected)
+            timer_start = millis(); // Reset timer on movement
+            if (!is_on)
             {
-                Serial.println("Movement detected");
-                digitalWrite(2, HIGH);
-
-                DMX::Write(1, 125);
-                DMX::Write(2, 125);
-                DMX::Write(3, 125);
-                DMX::Write(4, 125);
-                DMX::Write(5, 125);
-                DMX::Write(6, 125);
-                DMX::Write(7, 125);
-                DMX::Write(8, 125);
-
-                for (int i = 0; i < upper_segment.getSize(); ++i)
-                {
-                    upper_leds[i] = CRGB::Red; // Set each LED to white
-                }
-
-                for (int i = 0; i < lower_segment.getSize(); ++i)
-                {
-                    lower_leds[i] = CRGB::Red; // Set each LED to white
-                }
+                is_on = true;
+                toOn();
             }
             else
             {
-                Serial.println("No movement detected");
-                digitalWrite(2, LOW);
 
-                DMX::Write(1, 0);
-                DMX::Write(2, 0);
-                DMX::Write(3, 0);
-                DMX::Write(4, 0);
-                DMX::Write(5, 0);
-                DMX::Write(6, 0);
-                DMX::Write(7, 0);
-                DMX::Write(8, 0);
-                for (int i = 0; i < upper_segment.getSize(); ++i)
+                // Start laser if cooldown period has passed
+                if (!laser_is_on && millis() - last_laser_end > LASER_COOLDOWN * 1000)
                 {
-                    upper_leds[i] = CRGB::Black; // Set each LED to white
-                }
-
-                for (int i = 0; i < lower_segment.getSize(); ++i)
-                {
-                    lower_leds[i] = CRGB::Black; // Set each LED to white
+                    laserOn();
                 }
             }
+        }
 
-            FastLED.show();
-            movementDetected = false;
+        // Check if laser needs to be turned off (2 second timer)
+        if (laser_is_on && (millis() - laser_start > LASER_TIME * 1000))
+        {
+            laserOff();
+        }
+
+        // Check if we need to turn off main lights (timer expired)
+        if (is_on && (millis() - timer_start > ON_TIME * 1000))
+        {
+            is_on = false;
+            toOff();
         }
     }
 };
