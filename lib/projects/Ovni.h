@@ -9,7 +9,7 @@
 #include "PhysicalSegments.h"
 #include "VirtualSegments.h"
 #include "Utils.h"
-#include <dmx.h>
+#include "../dmx/dmx.h"
 
 template <size_t NUM_LEDS>
 class Ovni : public Project<NUM_LEDS>
@@ -51,7 +51,7 @@ public:
         pinMode(movement_sensor_pin, INPUT); // PIR motion sensor is determined is an input here.
         pinMode(2, OUTPUT);
 
-        DMX::Initialize(output);
+        DMX::Initialize(DMXDirection::output);
     }
 
     long long lastPaint = 0;
